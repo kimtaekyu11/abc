@@ -87,23 +87,63 @@ game_code = """
     let obstacles = [];
     function createObstacle() {
       let size = Math.random() * 50 + 30;
-      let x = Math.random() * (canvas.width - size);
-      let y = -size;
-      let speed = 5 + Math.random() * 3;
-      let direction = Math.random() < 0.5 ? 1 : -1; // 장애물이 지그재그로 이동하도록 방향 설정
-      obstacles.push({ x: x, y: y, size: size, speed: speed, direction: direction });
+      let shape = Math.random() < 0.33 ? 'square' : (Math.random() < 0.5 ? 'circle' : 'triangle');
+      let x, y, speedX = 0, speedY = 0;
+
+      // 장애물 위치 랜덤으로 설정 (사방에서 나오게)
+      const direction = Math.floor(Math.random() * 4); // 0: 위, 1: 아래, 2: 왼쪽, 3: 오른쪽
+
+      if (direction === 0) {  // 위에서 나오는 장애물
+        x = Math.random() * canvas.width;
+        y = -size;
+        speedY = 5 + Math.random() * 3;
+      } else if (direction === 1) {  // 아래에서 나오는 장애물
+        x = Math.random() * canvas.width;
+        y = canvas.height + size;
+        speedY = -(5 + Math.random() * 3);
+      } else if (direction === 2) {  // 왼쪽에서 나오는 장애물
+        x = -size;
+        y = Math.random() * canvas.height;
+        speedX = 5 + Math.random() * 3;
+      } else {  // 오른쪽에서 나오는 장애물
+        x = canvas.width + size;
+        y = Math.random() * canvas.height;
+        speedX = -(5 + Math.random() * 3);
+      }
+
+      obstacles.push({ x: x, y: y, size: size, shape: shape, speedX: speedX, speedY: speedY });
     }
 
     // 장애물 그리기
     function drawObstacles() {
-      ctx.fillStyle = '#e74c3c'; // 장애물 색상
       obstacles.forEach(obstacle => {
-        ctx.fillRect(obstacle.x, obstacle.y, obstacle.size, obstacle.size);
-        obstacle.y += obstacle.speed;
-        obstacle.x += obstacle.direction * 2; // 지그재그 이동
+        // 장애물 모양에 따라 다르게 그리기
+        ctx.fillStyle = '#e74c3c'; // 기본 장애물 색상
+
+        if (obstacle.shape === 'square') {
+          ctx.fillRect(obstacle.x, obstacle.y, obstacle.size, obstacle.size);
+        } else if (obstacle.shape === 'circle') {
+          ctx.beginPath();
+          ctx.arc(obstacle.x + obstacle.size / 2, obstacle.y + obstacle.size / 2, obstacle.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (obstacle.shape === 'triangle') {
+          ctx.beginPath();
+          ctx.moveTo(obstacle.x, obstacle.y + obstacle.size);
+          ctx.lineTo(obstacle.x + obstacle.size / 2, obstacle.y);
+          ctx.lineTo(obstacle.x + obstacle.size, obstacle.y + obstacle.size);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        // 장애물 이동
+        obstacle.x += obstacle.speedX;
+        obstacle.y += obstacle.speedY;
 
         // 장애물이 화면 밖으로 나가면 제거
-        if (obstacle.y > canvas.height) {
+        if (
+          obstacle.x < -obstacle.size || obstacle.x > canvas.width || 
+          obstacle.y < -obstacle.size || obstacle.y > canvas.height
+        ) {
           obstacles = obstacles.filter(o => o !== obstacle);
         }
 
@@ -149,15 +189,15 @@ game_code = """
       // 장애물 그리기
       drawObstacles();
 
-      // 새 장애물 생성
-      if (Math.random() < 0.02) {
+      // 새 장애물 생성 (빠르게 생성)
+      if (Math.random() < 0.05) { // 장애물 빈도 증가
         createObstacle();
       }
     }
 
     // 게임 시작
     function startGame() {
-      gameInterval = setInterval(updateGame, 20);
+      gameInterval = setInterval(updateGame, 16); // 게임 속도 더 빠르게 설정 (60fps)
     }
   </script>
 </body>
