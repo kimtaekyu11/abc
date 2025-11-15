@@ -1,49 +1,105 @@
 import streamlit as st
+import time
+from streamlit.components.v1 import html
 
-# 게임 상태 초기화
-if 'score' not in st.session_state:
-    st.session_state.score = 0
-if 'auto_clicker' not in st.session_state:
-    st.session_state.auto_clicker = 0
-if 'click_boost' not in st.session_state:
-    st.session_state.click_boost = 1
-if 'next_upgrade_cost' not in st.session_state:
-    st.session_state.next_upgrade_cost = 50
+# HTML + JavaScript로 피하기 게임 만들기
+game_code = """
+<!DOCTYPE html>
+<html>
+<head>
+  <title>피하기 게임</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { background-color: #eee; display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const playerWidth = 50;
+    const playerHeight = 20;
+    let playerX = canvas.width / 2 - playerWidth / 2;
+    let playerY = canvas.height - playerHeight - 10;
+    let playerSpeed = 5;
+    let gameInterval;
+    let score = 0;
 
-# 게임 타이틀
-st.title("업그레이드 기능이 있는 간단한 클리커 게임")
+    // 게임 환경 설정
+    window.onload = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      startGame();
+    };
 
-# 점수 출력
-st.write(f"현재 점수: {st.session_state.score}")
-st.write(f"자동 클릭기 보유: {st.session_state.auto_clicker}개")
-st.write(f"클릭 당 점수 보너스: {st.session_state.click_boost}배")
+    // 키 입력 감지
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' && playerX > 0) {
+        playerX -= playerSpeed;
+      }
+      if (e.key === 'ArrowRight' && playerX < canvas.width - playerWidth) {
+        playerX += playerSpeed;
+      }
+    });
 
-# 자동 클릭기 효과
-st.session_state.score += st.session_state.auto_clicker
+    // 장애물
+    let obstacles = [];
+    function createObstacle() {
+      let size = Math.random() * 50 + 30;
+      let x = Math.random() * (canvas.width - size);
+      obstacles.push({ x: x, y: -size, size: size });
+    }
 
-# 클릭 버튼
-if st.button("클릭!"):
-    st.session_state.score += st.session_state.click_boost
+    // 게임 루프
+    function updateGame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // 플레이어 그리기
+      ctx.fillStyle = '#00f';
+      ctx.fillRect(playerX, playerY, playerWidth, playerHeight);
+      
+      // 장애물 그리기
+      ctx.fillStyle = '#f00';
+      obstacles.forEach(obstacle => {
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.size, obstacle.size);
+        obstacle.y += 5;
+        
+        // 충돌 감지
+        if (
+          playerX < obstacle.x + obstacle.size &&
+          playerX + playerWidth > obstacle.x &&
+          playerY < obstacle.y + obstacle.size &&
+          playerY + playerHeight > obstacle.y
+        ) {
+          clearInterval(gameInterval);
+          alert('게임 오버! 점수: ' + score);
+          window.location.reload(); // 게임 재시작
+        }
+      });
 
-# 업그레이드 버튼
-if st.session_state.score >= st.session_state.next_upgrade_cost:
-    if st.button(f"자동 클릭기 업그레이드 (가격: {st.session_state.next_upgrade_cost} 점수)"):
-        st.session_state.auto_clicker += 1
-        st.session_state.score -= st.session_state.next_upgrade_cost
-        st.session_state.next_upgrade_cost *= 2  # 업그레이드 가격 증가
-else:
-    st.write("자동 클릭기를 구매하려면 더 많은 점수가 필요합니다!")
+      // 장애물 제거
+      obstacles = obstacles.filter(obstacle => obstacle.y < canvas.height);
 
-# 클릭 보너스 업그레이드
-if st.session_state.score >= st.session_state.next_upgrade_cost:
-    if st.button(f"클릭 보너스 업그레이드 (가격: {st.session_state.next_upgrade_cost} 점수)"):
-        st.session_state.click_boost += 1
-        st.session_state.score -= st.session_state.next_upgrade_cost
-        st.session_state.next_upgrade_cost *= 2  # 업그레이드 가격 증가
+      // 점수 증가
+      score += 1;
 
-# 게임 설명
-st.write("""
-### 업그레이드 설명:
-- **자동 클릭기**: 자동으로 점수를 추가합니다.
-- **클릭 보너스**: 클릭할 때마다 점수 상승량이 증가합니다.
-""")
+      // 새 장애물 생성
+      if (Math.random() < 0.02) {
+        createObstacle();
+      }
+    }
+
+    // 게임 시작
+    function startGame() {
+      gameInterval = setInterval(updateGame, 20);
+    }
+  </script>
+</body>
+</html>
+"""
+
+# Streamlit으로 HTML 코드 삽입
+html(game_code, height=700)
+
+
