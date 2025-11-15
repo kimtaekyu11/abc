@@ -25,6 +25,11 @@ game_code = """
     let gameInterval;
     let score = 0;
 
+    let moveLeft = false;
+    let moveRight = false;
+    let moveUp = false;
+    let moveDown = false;
+
     // 게임 환경 설정
     window.onload = () => {
       canvas.width = window.innerWidth;
@@ -34,17 +39,32 @@ game_code = """
 
     // 키 입력 감지
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft' && playerX > 0) {
-        playerX -= playerSpeed;
+      if (e.key === 'ArrowLeft') {
+        moveLeft = true;
       }
-      if (e.key === 'ArrowRight' && playerX < canvas.width - playerWidth) {
-        playerX += playerSpeed;
+      if (e.key === 'ArrowRight') {
+        moveRight = true;
       }
-      if (e.key === 'ArrowUp' && playerY > 0) {
-        playerY -= playerSpeed;
+      if (e.key === 'ArrowUp') {
+        moveUp = true;
       }
-      if (e.key === 'ArrowDown' && playerY < canvas.height - playerHeight) {
-        playerY += playerSpeed;
+      if (e.key === 'ArrowDown') {
+        moveDown = true;
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft') {
+        moveLeft = false;
+      }
+      if (e.key === 'ArrowRight') {
+        moveRight = false;
+      }
+      if (e.key === 'ArrowUp') {
+        moveUp = false;
+      }
+      if (e.key === 'ArrowDown') {
+        moveDown = false;
       }
     });
 
@@ -60,6 +80,20 @@ game_code = """
     function updateGame() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
+      // 플레이어 이동
+      if (moveLeft && playerX > 0) {
+        playerX -= playerSpeed;
+      }
+      if (moveRight && playerX < canvas.width - playerWidth) {
+        playerX += playerSpeed;
+      }
+      if (moveUp && playerY > 0) {
+        playerY -= playerSpeed;
+      }
+      if (moveDown && playerY < canvas.height - playerHeight) {
+        playerY += playerSpeed;
+      }
+
       // 플레이어 그리기
       ctx.fillStyle = '#00f';
       ctx.fillRect(playerX, playerY, playerWidth, playerHeight);
