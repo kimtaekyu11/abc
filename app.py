@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit.components.v1 import html
 
 # HTML + JavaScript로 피하기 게임 만들기
-game_code = """
+game_code = ""
 <!DOCTYPE html>
 <html>
 <head>
