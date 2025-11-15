@@ -1,4 +1,3 @@
-<html>
 <head>
   <title>피하기 게임</title>
   <style>
