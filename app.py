@@ -1,212 +1,156 @@
-import streamlit as st
-from streamlit.components.v1 import html
-
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <title>피하기 게임</title>
-  <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { background-color: #f4f4f4; display: block; }
-    #score { font-size: 20px; font-family: 'Arial', sans-serif; position: absolute; top: 10px; left: 10px; color: #333; }
-    #message { font-size: 24px; font-family: 'Arial', sans-serif; position: absolute; top: 100px; right: 20px; color: #e74c3c; font-weight: bold; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>클리커 게임</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            margin-top: 50px;
+            color: #333;
+        }
+
+        #score {
+            font-size: 2em;
+            color: #27ae60;
+            margin-top: 20px;
+        }
+
+        #clickButton {
+            padding: 20px 40px;
+            font-size: 1.5em;
+            margin-top: 30px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        #clickButton:hover {
+            background-color: #2980b9;
+        }
+
+        #upgrades {
+            margin-top: 40px;
+        }
+
+        .upgrade {
+            margin: 10px;
+            padding: 10px;
+            font-size: 1.2em;
+            background-color: #f39c12;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 200px;
+            margin: 10px auto;
+        }
+
+        .upgrade:hover {
+            background-color: #e67e22;
+        }
+
+        .upgrade.disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        #message {
+            font-size: 1.5em;
+            color: #e74c3c;
+            margin-top: 30px;
+        }
+    </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
-  <div id="score"></div>
-  <div id="message"></div>
-  <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const playerWidth = 50;
-    const playerHeight = 50;
-    let playerX = canvas.width / 2 - playerWidth / 2;
-    let playerY = canvas.height - playerHeight - 10;
-    let playerSpeed = 10;  // 플레이어 속도
-    let score = 0;
+    <h1>클리커 게임</h1>
+    <div id="score">점수: 0</div>
+    <button id="clickButton">클릭해서 점수 얻기</button>
 
-    // 이동 상태 변수
-    let moveLeft = false;
-    let moveRight = false;
-    let moveUp = false;
-    let moveDown = false;
+    <div id="upgrades">
+        <div class="upgrade" id="upgrade1">
+            클릭 당 점수 +1 추가 (가격: 10점)
+        </div>
+        <div class="upgrade" id="upgrade2">
+            클릭 당 점수 +5 추가 (가격: 50점)
+        </div>
+        <div class="upgrade" id="upgrade3">
+            클릭 당 점수 +10 추가 (가격: 100점)
+        </div>
+    </div>
 
-    let messages = [
-      "넌 이제 끝이야!", 
-      "한 번 더 도전해봐!", 
-      "움직여, 피할 수 있어!", 
-      "지금이 기회야!"
-    ];
+    <div id="message"></div>
 
-    let currentMessage = 0;
+    <script>
+        let score = 0;
+        let scorePerClick = 1;
 
-    // 게임 환경 설정
-    window.onload = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      startGame();
-    };
+        // 업그레이드 가격
+        const upgradePrices = [10, 50, 100];
+        const upgradeBonuses = [1, 5, 10];
+        let upgradesBought = [false, false, false]; // 업그레이드 구매 여부
 
-    // 키 입력 감지
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') {
-        moveLeft = true;
-      }
-      if (e.key === 'ArrowRight') {
-        moveRight = true;
-      }
-      if (e.key === 'ArrowUp') {
-        moveUp = true;
-      }
-      if (e.key === 'ArrowDown') {
-        moveDown = true;
-      }
-    });
+        const scoreElement = document.getElementById("score");
+        const clickButton = document.getElementById("clickButton");
+        const messageElement = document.getElementById("message");
 
-    document.addEventListener('keyup', (e) => {
-      if (e.key === 'ArrowLeft') {
-        moveLeft = false;
-      }
-      if (e.key === 'ArrowRight') {
-        moveRight = false;
-      }
-      if (e.key === 'ArrowUp') {
-        moveUp = false;
-      }
-      if (e.key === 'ArrowDown') {
-        moveDown = false;
-      }
-    });
+        const upgradeElements = [
+            document.getElementById("upgrade1"),
+            document.getElementById("upgrade2"),
+            document.getElementById("upgrade3")
+        ];
 
-    // 점수 업데이트
-    function updateScore() {
-      document.getElementById('score').innerText = '점수: ' + score;
-    }
+        // 클릭 버튼 클릭 시 점수 증가
+        clickButton.addEventListener("click", function() {
+            score += scorePerClick;
+            updateScore();
+            checkUpgrades(); // 업그레이드가 활성화되었는지 확인
+        });
 
-    // 대사 업데이트
-    function updateMessage() {
-      document.getElementById('message').innerText = messages[currentMessage];
-      currentMessage = (currentMessage + 1) % messages.length;
-    }
+        // 업그레이드 구매 기능
+        upgradeElements.forEach((upgrade, index) => {
+            upgrade.addEventListener("click", () => {
+                if (score >= upgradePrices[index] && !upgradesBought[index]) {
+                    score -= upgradePrices[index];
+                    scorePerClick += upgradeBonuses[index];
+                    upgradesBought[index] = true;
+                    upgrade.classList.add("disabled"); // 구매 후 비활성화
+                    messageElement.textContent = `${upgradeBonuses[index]} 추가! 업그레이드 완료!`;
+                    updateScore();
+                    checkUpgrades();
+                } else if (upgradesBought[index]) {
+                    messageElement.textContent = "이미 이 업그레이드를 구매했습니다!";
+                } else {
+                    messageElement.textContent = "점수가 부족합니다!";
+                }
+            });
+        });
 
-    // 캐릭터 그리기
-    function drawPlayer() {
-      ctx.fillStyle = '#3498db'; // 캐릭터 색상
-      ctx.beginPath();
-      ctx.arc(playerX + playerWidth / 2, playerY + playerHeight / 2, playerWidth / 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // 장애물
-    let obstacles = [];
-    function createObstacle() {
-      let size = Math.random() * 50 + 30;
-      let shape = Math.random() < 0.33 ? 'square' : (Math.random() < 0.5 ? 'circle' : 'triangle');
-      let x, y, speedX = 0, speedY = 0;
-
-      // 장애물 위치 랜덤으로 설정 (사방에서 나오게)
-      const direction = Math.floor(Math.random() * 4); // 0: 위, 1: 아래, 2: 왼쪽, 3: 오른쪽
-
-      if (direction === 0) {  // 위에서 나오는 장애물
-        x = Math.random() * canvas.width;
-        y = -size;
-        speedY = 5 + Math.random() * 3;
-      } else if (direction === 1) {  // 아래에서 나오는 장애물
-        x = Math.random() * canvas.width;
-        y = canvas.height + size;
-        speedY = -(5 + Math.random() * 3);
-      } else if (direction === 2) {  // 왼쪽에서 나오는 장애물
-        x = -size;
-        y = Math.random() * canvas.height;
-        speedX = 5 + Math.random() * 3;
-      } else {  // 오른쪽에서 나오는 장애물
-        x = canvas.width + size;
-        y = Math.random() * canvas.height;
-        speedX = -(5 + Math.random() * 3);
-      }
-
-      obstacles.push({ x: x, y: y, size: size, shape: shape, speedX: speedX, speedY: speedY, angle: 0 });
-    }
-
-    // 장애물 그리기
-    function drawObstacles() {
-      obstacles.forEach(obstacle => {
-        // 장애물 모양에 따라 다르게 그리기
-        ctx.fillStyle = '#e74c3c'; // 기본 장애물 색상
-
-        ctx.save();
-        ctx.translate(obstacle.x + obstacle.size / 2, obstacle.y + obstacle.size / 2); // 회전의 중심점 설정
-        ctx.rotate(obstacle.angle);  // 회전 각도 적용
-        ctx.translate(-obstacle.size / 2, -obstacle.size / 2); // 회전 후 원래 위치로 복원
-
-        if (obstacle.shape === 'square') {
-          ctx.fillRect(0, 0, obstacle.size, obstacle.size);
-        } else if (obstacle.shape === 'circle') {
-          ctx.beginPath();
-          ctx.arc(obstacle.size / 2, obstacle.size / 2, obstacle.size / 2, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (obstacle.shape === 'triangle') {
-          ctx.beginPath();
-          ctx.moveTo(0, obstacle.size);
-          ctx.lineTo(obstacle.size / 2, 0);
-          ctx.lineTo(obstacle.size, obstacle.size);
-          ctx.closePath();
-          ctx.fill();
+        // 점수 업데이트 함수
+        function updateScore() {
+            scoreElement.textContent = `점수: ${score}`;
         }
 
-        ctx.restore(); // 회전 복원
-
-        // 장애물 이동
-        obstacle.x += obstacle.speedX;
-        obstacle.y += obstacle.speedY;
-        obstacle.angle += 0.05;  // 장애물 회전 속도
-
-        // 장애물이 화면 밖으로 나가면 제거
-        if (
-          obstacle.x < -obstacle.size || obstacle.x > canvas.width || 
-          obstacle.y < -obstacle.size || obstacle.y > canvas.height
-        ) {
-          obstacles = obstacles.filter(o => o !== obstacle);
+        // 업그레이드 상태 확인
+        function checkUpgrades() {
+            upgradeElements.forEach((upgrade, index) => {
+                if (score >= upgradePrices[index] && !upgradesBought[index]) {
+                    upgrade.classList.remove("disabled");
+                }
+            });
         }
 
-        // 충돌 감지
-        if (
-          playerX < obstacle.x + obstacle.size &&
-          playerX + playerWidth > obstacle.x &&
-          playerY < obstacle.y + obstacle.size &&
-          playerY + playerHeight > obstacle.y
-        ) {
-          clearInterval(gameInterval);
-          alert('게임 오버! 점수: ' + score);
-          window.location.reload(); // 게임 재시작
-        }
-      });
-    }
-
-    // 게임 루프 (requestAnimationFrame을 사용하여 안정적으로 프레임 처리)
-    function updateGame() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // 플레이어 이동
-      if (moveLeft && playerX > 0) {
-        playerX -= playerSpeed;
-      }
-      if (moveRight && playerX < canvas.width - playerWidth) {
-        playerX += playerSpeed;
-      }
-      if (moveUp && playerY > 0) {
-        playerY -= playerSpeed;
-      }
-      if (moveDown && playerY < canvas.height - playerHeight) {
-        playerY += playerSpeed;
-      }
-
-      // 점수 증가
-      score += 1;
-      updateScore();
-
-      // 대사 업데이트
-      updateMessage();
-
-      // 캐릭터 그리기
+        // 초기 상태 확인
+        checkUpgrades();
+    </script>
+</body>
+</html>
