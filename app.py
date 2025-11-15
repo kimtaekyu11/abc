@@ -206,3 +206,4 @@ game_code = """
 
 # Streamlit으로 HTML 코드 삽입
 html(game_code, height=700)
+
