@@ -1,5 +1,4 @@
 import streamlit as st
-import time
 from streamlit.components.v1 import html
 
 # HTML + JavaScript로 피하기 게임 만들기
@@ -22,7 +21,7 @@ game_code = """
     const playerHeight = 20;
     let playerX = canvas.width / 2 - playerWidth / 2;
     let playerY = canvas.height - playerHeight - 10;
-    let playerSpeed = 5;
+    let playerSpeed = 10;  // 플레이어 속도 증가
     let gameInterval;
     let score = 0;
 
@@ -40,6 +39,12 @@ game_code = """
       }
       if (e.key === 'ArrowRight' && playerX < canvas.width - playerWidth) {
         playerX += playerSpeed;
+      }
+      if (e.key === 'ArrowUp' && playerY > 0) {
+        playerY -= playerSpeed;
+      }
+      if (e.key === 'ArrowDown' && playerY < canvas.height - playerHeight) {
+        playerY += playerSpeed;
       }
     });
 
@@ -63,7 +68,7 @@ game_code = """
       ctx.fillStyle = '#f00';
       obstacles.forEach(obstacle => {
         ctx.fillRect(obstacle.x, obstacle.y, obstacle.size, obstacle.size);
-        obstacle.y += 5;
+        obstacle.y += 8;  // 장애물 속도 증가
         
         // 충돌 감지
         if (
@@ -101,5 +106,3 @@ game_code = """
 
 # Streamlit으로 HTML 코드 삽입
 html(game_code, height=700)
-
-
