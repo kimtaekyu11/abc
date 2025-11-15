@@ -94,10 +94,9 @@
         let score = 0;
         let scorePerClick = 1;
 
-        // 업그레이드 가격
         const upgradePrices = [10, 50, 100];
         const upgradeBonuses = [1, 5, 10];
-        let upgradesBought = [false, false, false]; // 업그레이드 구매 여부
+        let upgradesBought = [false, false, false];
 
         const scoreElement = document.getElementById("score");
         const clickButton = document.getElementById("clickButton");
@@ -109,21 +108,19 @@
             document.getElementById("upgrade3")
         ];
 
-        // 클릭 버튼 클릭 시 점수 증가
         clickButton.addEventListener("click", function() {
             score += scorePerClick;
             updateScore();
-            checkUpgrades(); // 업그레이드가 활성화되었는지 확인
+            checkUpgrades();
         });
 
-        // 업그레이드 구매 기능
         upgradeElements.forEach((upgrade, index) => {
             upgrade.addEventListener("click", () => {
                 if (score >= upgradePrices[index] && !upgradesBought[index]) {
                     score -= upgradePrices[index];
                     scorePerClick += upgradeBonuses[index];
                     upgradesBought[index] = true;
-                    upgrade.classList.add("disabled"); // 구매 후 비활성화
+                    upgrade.classList.add("disabled");
                     messageElement.textContent = `${upgradeBonuses[index]} 추가! 업그레이드 완료!`;
                     updateScore();
                     checkUpgrades();
@@ -135,12 +132,10 @@
             });
         });
 
-        // 점수 업데이트 함수
         function updateScore() {
             scoreElement.textContent = `점수: ${score}`;
         }
 
-        // 업그레이드 상태 확인
         function checkUpgrades() {
             upgradeElements.forEach((upgrade, index) => {
                 if (score >= upgradePrices[index] && !upgradesBought[index]) {
@@ -149,7 +144,6 @@
             });
         }
 
-        // 초기 상태 확인
         checkUpgrades();
     </script>
 </body>
