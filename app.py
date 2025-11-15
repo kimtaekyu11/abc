@@ -1,3 +1,11 @@
+import streamlit as st
+from streamlit.components.v1 import html
+
+# HTML + JavaScript로 피하기 게임 만들기
+game_code = """
+<!DOCTYPE html>
+<html>
+<head>
   <title>피하기 게임</title>
   <style>
     body { margin: 0; overflow: hidden; }
@@ -210,11 +218,5 @@
       drawObstacles();
 
       // 새 장애물 생성 (빠르게 생성)
-      if (Math.random() < 0.05) { // 장애물 빈도 증가
-        createObstacle();
-      }
-    }
+      if (
 
-    // 게임 시작
-    function startGame() {
-      gameInterval = setInterval(updateGame, 16); // 게임 속도
