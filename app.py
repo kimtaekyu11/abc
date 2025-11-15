@@ -1,4 +1,3 @@
-<head>
   <title>피하기 게임</title>
   <style>
     body { margin: 0; overflow: hidden; }
